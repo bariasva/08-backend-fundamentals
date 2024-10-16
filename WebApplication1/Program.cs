@@ -141,14 +141,28 @@ app.MapPut("/employee/{id}", (int id, Employee updatedEmployee) =>
     }
 });
 
-/*
-app.MapDelete("/product/{id}", (int id) =>
+// DELETE METHODS
+
+// Delete employee
+app.MapDelete("/employee/{id}", (int id) =>
 {
-    id--;
-    productos.Remove(productos[id]);
-    return Results.Ok($"Element ID #{id++} deleted");
+    var employeeId = employees.FindIndex(c => c.Id == id);
+
+    var deletedEmployee = employees.FirstOrDefault(e => e.Id == id);
+
+    if (employeeId >= 0 && deletedEmployee != null)
+    {
+        employees.Remove(employees[employeeId]);
+
+        // Return 200 OK with the updated product
+        return Results.Ok($"Deleted Employee with ID #{id} \n {deletedEmployee}");
+    }
+    else
+    {
+        return Results.NotFound("Company ID not Valid");
+    }
 });
-*/
+
 app.Run();
 
 class Company
