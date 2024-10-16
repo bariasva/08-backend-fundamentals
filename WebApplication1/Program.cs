@@ -187,6 +187,30 @@ app.MapDelete("/company/{id}", (int id) =>
     }
 });
 
+// Delete company with employees
+app.MapDelete("/company/all/{id}", (int id) =>
+{
+    var companyId = company.FindIndex(c => c.Id == id);
+    var hasEmployee = employees.Any(e => e.CompanyID == id);
+    if (hasEmployee)
+    {
+        employees.RemoveAll(e => e.CompanyID == id);
+    }
+
+    var deletedCompany = company.FirstOrDefault(e => e.Id == id);
+
+    if (companyId >= 0)
+    {
+        company.Remove(company[companyId]);
+
+        return Results.Ok($"Deleted Company with ID #{id} \n {deletedCompany}");
+    }
+    else
+    {
+        return Results.NotFound("Company ID not Valid");
+    }
+});
+
 app.Run();
 
 class Company
