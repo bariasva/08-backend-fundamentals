@@ -64,9 +64,9 @@ app.MapGet("/employee", () =>
 });
 
 // Employee by company
-app.MapGet("/employee/{company}", (int company) =>
+app.MapGet("/employee/{id}", (int id) =>
 {
-    var companyEmployee = employees.FindAll(i => i.CompanyID == company);
+    var companyEmployee = employees.FindAll(i => i.CompanyID == id);
 
     if (companyEmployee.Count > 0)
     {
