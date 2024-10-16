@@ -31,3 +31,4 @@ C:\Users\wisdomtoend\Vida\Educacion\Alterna Academy\08-backend-fundamentals\WebA
 C:\Users\wisdomtoend\Vida\Educacion\Alterna Academy\08-backend-fundamentals\WebApplication1\obj\Debug\net8.0\WebApplication1.pdb
 C:\Users\wisdomtoend\Vida\Educacion\Alterna Academy\08-backend-fundamentals\WebApplication1\obj\Debug\net8.0\WebApplication1.genruntimeconfig.cache
 C:\Users\wisdomtoend\Vida\Educacion\Alterna Academy\08-backend-fundamentals\WebApplication1\obj\Debug\net8.0\ref\WebApplication1.dll
+C:\Users\wisdomtoend\Vida\Educacion\Alterna Academy\08-backend-fundamentals\WebApplication1\obj\Debug\net8.0\WebApplication1.sourcelink.json

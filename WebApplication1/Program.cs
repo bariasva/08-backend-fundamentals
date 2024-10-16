@@ -26,11 +26,11 @@ var company = new List<Company>
 
 var employees = new List<Employee>
 {
-    new() {Id= 1, Name="Selena Gomez", Department="HR", Company="Kitchen"},
-    new() {Id= 2, Name="Ariana Grande", Department="HR", Company="Kitchen"},
-    new() {Id= 3, Name="Demi Lovato", Department="HR", Company="Kitchen"},
-    new() {Id= 4, Name="Bridgit Mendler", Department="CEO", Company="Solutions"},
-    new() {Id= 5, Name="Sohara Hinata", Department="IT", Company="Solutions"},
+    new() {Id= 1, Name="Selena Gomez", Department="HR", CompanyID=2},
+    new() {Id= 2, Name="Ariana Grande", Department="HR", CompanyID=2},
+    new() {Id= 3, Name="Demi Lovato", Department="HR", CompanyID=2},
+    new() {Id= 4, Name="Bridgit Mendler", Department="CEO", CompanyID=3},
+    new() {Id= 5, Name="Sohara Hinata", Department="IT", CompanyID=3},
 };
 
 
@@ -64,9 +64,9 @@ app.MapGet("/employee", () =>
 });
 
 // Employee by company
-app.MapGet("/employee/{company}", (string company) =>
+app.MapGet("/employee/{company}", (int company) =>
 {
-    var companyEmployee = employees.FindAll(i => i.Company.ToLower() == company.ToLower());
+    var companyEmployee = employees.FindAll(i => i.CompanyID == company);
 
     if (companyEmployee.Count > 0)
     {
@@ -91,34 +91,36 @@ app.MapPost("/company", (Company newCompany) =>
     return Results.Created($"/company/{newCompany.Id}", newCompany);
 });
 
+// New Employees
 app.MapPost("/employee", (Employee newEmployee) =>
 {
     newEmployee.Id = employees.Count + 1;
-    company.Add(new() { Id = newEmployee.Id, Name = newEmployee.Name });
+    employees.Add(new() { Id = newEmployee.Id, Name = newEmployee.Name, Department = newEmployee.Department, CompanyID = newEmployee.CompanyID });
 
     return Results.Created($"/company/{newEmployee.Id}", newEmployee);
 });
 
-/*
-// Edit an existing product with PUT
-app.MapPut("/product/{id}", (int id, Producto newProduct) =>
+// PUT Methods
+
+// Edit an existing company
+app.MapPut("/company/{id}", (int id, Company updatedCompany) =>
 {
-    id--;
-    // Check if the id is within the valid range
-    if (id < 0 || id > productos.Count)
-    {
-        return Results.NotFound($"Product with ID {id} not found.");
-    }
+    var companyId = company.FindIndex(c => c.Id == id);
 
     // Update the product with the new values
-    var existingProduct = productos[id];
-    existingProduct.Name = newProduct.Name;
-    existingProduct.Price = newProduct.Price;
-
-    // Return 200 OK with the updated product
-    return Results.Ok(existingProduct);
+    if (companyId >= 0)
+    {
+        company[companyId].Name = updatedCompany.Name;
+        // Return 200 OK with the updated product
+        return Results.Ok(updatedCompany);
+    }
+    else
+    {
+        return Results.NotFound("Company ID not Valid");
+    }
 });
 
+/*
 app.MapDelete("/product/{id}", (int id) =>
 {
     id--;
@@ -139,5 +141,5 @@ class Employee
     public required int Id { get; set; }
     public required string Name { get; set; }
     public required string Department { get; set; }
-    public required string Company { get; set; }
+    public required int CompanyID { get; set; }
 }
