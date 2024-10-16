@@ -120,6 +120,27 @@ app.MapPut("/company/{id}", (int id, Company updatedCompany) =>
     }
 });
 
+// Edit an existing employee
+app.MapPut("/employee/{id}", (int id, Employee updatedEmployee) =>
+{
+    var employeeId = employees.FindIndex(c => c.Id == id);
+
+    // Update the product with the new values
+    if (employeeId >= 0)
+    {
+        employees[employeeId].Name = updatedEmployee.Name;
+        employees[employeeId].Department = updatedEmployee.Department;
+        employees[employeeId].CompanyID = updatedEmployee.CompanyID;
+
+        // Return 200 OK with the updated product
+        return Results.Ok(updatedEmployee);
+    }
+    else
+    {
+        return Results.NotFound("Company ID not Valid");
+    }
+});
+
 /*
 app.MapDelete("/product/{id}", (int id) =>
 {
