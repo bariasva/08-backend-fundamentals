@@ -150,12 +150,36 @@ app.MapDelete("/employee/{id}", (int id) =>
 
     var deletedEmployee = employees.FirstOrDefault(e => e.Id == id);
 
-    if (employeeId >= 0 && deletedEmployee != null)
+    if (employeeId >= 0)
     {
         employees.Remove(employees[employeeId]);
 
         // Return 200 OK with the updated product
         return Results.Ok($"Deleted Employee with ID #{id} \n {deletedEmployee}");
+    }
+    else
+    {
+        return Results.NotFound("Company ID not Valid");
+    }
+});
+
+// Delete company
+app.MapDelete("/company/{id}", (int id) =>
+{
+    var companyId = company.FindIndex(c => c.Id == id);
+    var hasEmployee = employees.Any(e => e.CompanyID == id);
+    if (hasEmployee)
+    {
+        return Results.Conflict("Please delete employees before deleting the company");
+    }
+
+    var deletedCompany = company.FirstOrDefault(e => e.Id == id);
+
+    if (companyId >= 0)
+    {
+        company.Remove(company[companyId]);
+
+        return Results.Ok($"Deleted Company with ID #{id} \n {deletedCompany}");
     }
     else
     {
