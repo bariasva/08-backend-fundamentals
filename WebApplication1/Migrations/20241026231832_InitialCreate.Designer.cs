@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241021025328_InitialCreate")]
+    [Migration("20241026231832_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -46,7 +46,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("companyId");
 
-                    b.ToTable("Articles");
+                    b.ToTable("Article", (string)null);
                 });
 
             modelBuilder.Entity("Company", b =>
@@ -63,7 +63,7 @@ namespace WebApplication1.Migrations
 
                     b.HasKey("id");
 
-                    b.ToTable("Invoice", (string)null);
+                    b.ToTable("Company", (string)null);
                 });
 
             modelBuilder.Entity("Employee", b =>
@@ -88,7 +88,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("companyId");
 
-                    b.ToTable("Employees");
+                    b.ToTable("Employee", (string)null);
                 });
 
             modelBuilder.Entity("Invoice", b =>
@@ -111,10 +111,9 @@ namespace WebApplication1.Migrations
 
                     b.HasKey("id");
 
-                    b.HasIndex("orderId")
-                        .IsUnique();
+                    b.HasIndex("orderId");
 
-                    b.ToTable("Invoices");
+                    b.ToTable("Invoice", (string)null);
                 });
 
             modelBuilder.Entity("Order", b =>
@@ -143,7 +142,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("employeeId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Order", (string)null);
                 });
 
             modelBuilder.Entity("OrderDetail", b =>
@@ -169,70 +168,91 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("orderId");
 
-                    b.ToTable("OrderDetails");
+                    b.ToTable("OrderDetail", (string)null);
+                });
+
+            modelBuilder.Entity("Users", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Article", b =>
                 {
-                    b.HasOne("Company", "company")
+                    b.HasOne("Company", "Company")
                         .WithMany("Articles")
                         .HasForeignKey("companyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("company");
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Employee", b =>
                 {
-                    b.HasOne("Company", "company")
+                    b.HasOne("Company", "Company")
                         .WithMany("Employees")
                         .HasForeignKey("companyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("company");
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Invoice", b =>
                 {
-                    b.HasOne("Order", "order")
-                        .WithOne("invoice")
-                        .HasForeignKey("Invoice", "orderId")
+                    b.HasOne("Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("orderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("order");
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Order", b =>
                 {
-                    b.HasOne("Employee", "employee")
+                    b.HasOne("Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("employeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("employee");
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("OrderDetail", b =>
                 {
-                    b.HasOne("Article", "article")
+                    b.HasOne("Article", "Article")
                         .WithMany("OrderDetails")
                         .HasForeignKey("articleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Order", "order")
+                    b.HasOne("Order", "Order")
                         .WithMany("OrderDetails")
                         .HasForeignKey("orderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("article");
+                    b.Navigation("Article");
 
-                    b.Navigation("order");
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Article", b =>
@@ -250,9 +270,6 @@ namespace WebApplication1.Migrations
             modelBuilder.Entity("Order", b =>
                 {
                     b.Navigation("OrderDetails");
-
-                    b.Navigation("invoice")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -12,7 +12,7 @@ namespace WebApplication1.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Invoice",
+                name: "Company",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -21,11 +21,25 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Invoice", x => x.id);
+                    table.PrimaryKey("PK_Company", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Articles",
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Article",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -36,17 +50,17 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Articles", x => x.id);
+                    table.PrimaryKey("PK_Article", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Articles_Invoice_companyId",
+                        name: "FK_Article_Company_companyId",
                         column: x => x.companyId,
-                        principalTable: "Invoice",
+                        principalTable: "Company",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Employees",
+                name: "Employee",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -57,17 +71,17 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Employees", x => x.id);
+                    table.PrimaryKey("PK_Employee", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Employees_Invoice_companyId",
+                        name: "FK_Employee_Company_companyId",
                         column: x => x.companyId,
-                        principalTable: "Invoice",
+                        principalTable: "Company",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Orders",
+                name: "Order",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -79,17 +93,17 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Orders", x => x.id);
+                    table.PrimaryKey("PK_Order", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Orders_Employees_employeeId",
+                        name: "FK_Order_Employee_employeeId",
                         column: x => x.employeeId,
-                        principalTable: "Employees",
+                        principalTable: "Employee",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Invoices",
+                name: "Invoice",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -100,17 +114,17 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Invoices", x => x.id);
+                    table.PrimaryKey("PK_Invoice", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Invoices_Orders_orderId",
+                        name: "FK_Invoice_Order_orderId",
                         column: x => x.orderId,
-                        principalTable: "Orders",
+                        principalTable: "Order",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "OrderDetails",
+                name: "OrderDetail",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -121,73 +135,75 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrderDetails", x => x.id);
+                    table.PrimaryKey("PK_OrderDetail", x => x.id);
                     table.ForeignKey(
-                        name: "FK_OrderDetails_Articles_articleId",
+                        name: "FK_OrderDetail_Article_articleId",
                         column: x => x.articleId,
-                        principalTable: "Articles",
+                        principalTable: "Article",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrderDetails_Orders_orderId",
+                        name: "FK_OrderDetail_Order_orderId",
                         column: x => x.orderId,
-                        principalTable: "Orders",
+                        principalTable: "Order",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Articles_companyId",
-                table: "Articles",
+                name: "IX_Article_companyId",
+                table: "Article",
                 column: "companyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_companyId",
-                table: "Employees",
+                name: "IX_Employee_companyId",
+                table: "Employee",
                 column: "companyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Invoices_orderId",
-                table: "Invoices",
-                column: "orderId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OrderDetails_articleId",
-                table: "OrderDetails",
-                column: "articleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OrderDetails_orderId",
-                table: "OrderDetails",
+                name: "IX_Invoice_orderId",
+                table: "Invoice",
                 column: "orderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_employeeId",
-                table: "Orders",
+                name: "IX_Order_employeeId",
+                table: "Order",
                 column: "employeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetail_articleId",
+                table: "OrderDetail",
+                column: "articleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetail_orderId",
+                table: "OrderDetail",
+                column: "orderId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Invoices");
-
-            migrationBuilder.DropTable(
-                name: "OrderDetails");
-
-            migrationBuilder.DropTable(
-                name: "Articles");
-
-            migrationBuilder.DropTable(
-                name: "Orders");
-
-            migrationBuilder.DropTable(
-                name: "Employees");
-
-            migrationBuilder.DropTable(
                 name: "Invoice");
+
+            migrationBuilder.DropTable(
+                name: "OrderDetail");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Article");
+
+            migrationBuilder.DropTable(
+                name: "Order");
+
+            migrationBuilder.DropTable(
+                name: "Employee");
+
+            migrationBuilder.DropTable(
+                name: "Company");
         }
     }
 }
