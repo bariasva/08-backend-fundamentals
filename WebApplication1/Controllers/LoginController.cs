@@ -8,6 +8,7 @@ using System.Text;
 
 namespace WebApplication1.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class LoginController : ControllerBase
@@ -22,16 +23,17 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(Users login)
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             // Check if user exists in the database
             var user = await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Username == login.Username && u.Password == login.Password);
+                .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
 
-            if (user == null)
+            if (user == null || !VerifyPassword(loginDto.Password, user.Password, user.Salt))
             {
                 return Unauthorized("Invalid credentials");
             }
+
 
             // Generate JWT if credentials are valid
             var token = GenerateJwtToken(user.Username);
@@ -39,27 +41,43 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(Users user)
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if (await _dbContext.Users.AnyAsync(u => u.Username == user.Username))
+            if (await _dbContext.Users.AnyAsync(u => u.Username == registerDto.Username))
             {
                 return BadRequest("Username already exists.");
             }
 
-            // Consider hashing the password before storing
-            user.Password = HashPassword(user.Password);
+            // Register method
+            var (passwordHash, salt) = HashPassword(registerDto.Password);
+            var user = new Users
+            {
+                Username = registerDto.Username,
+                Password = passwordHash,
+                Salt = salt
+            };
+
+
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
             return Ok("User registered successfully.");
         }
 
-        private string HashPassword(string password)
+        private (string PasswordHash, string Salt) HashPassword(string password)
         {
-            using var sha256 = SHA256.Create();
-            return Convert.ToBase64String(sha256.ComputeHash(Encoding.UTF8.GetBytes(password)));
+            using var hmac = new HMACSHA512();
+            var salt = Convert.ToBase64String(hmac.Key); // Use HMAC key as salt
+            var passwordHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
+            return (passwordHash, salt);
         }
 
+        private bool VerifyPassword(string password, string storedPasswordHash, string storedSalt)
+        {
+            using var hmac = new HMACSHA512(Convert.FromBase64String(storedSalt));
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.FromBase64String(storedPasswordHash).SequenceEqual(computedHash);
+        }
 
         private string GenerateJwtToken(string username)
         {
@@ -77,12 +95,11 @@ namespace WebApplication1.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddMinutes(30), // Consider making this configurable
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
-
 
 }

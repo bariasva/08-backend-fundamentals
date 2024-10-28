@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication1.Controllers
 {
-    [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/[controller]")]
     public class ArticlesController : ControllerBase
     {
         private readonly ApplicationDbContext _dbContext;
@@ -18,43 +19,91 @@ namespace WebApplication1.Controllers
 
         // GET: api/articles
         [HttpGet]
-        public async Task<IActionResult> GetArticles()
+        public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
         {
-            var articles = await _dbContext.Articles.ToListAsync();
+            var articles = await _dbContext.Articles
+                .Include(a => a.Company) // Assuming there's a navigation property
+                .Select(a => new ArticleReadDto
+                {
+                    Id = a.id,
+                    Name = a.name,
+                    Value = a.value,
+                    CompanyId = a.companyId,
+                    CompanyName = a.Company.name // Include company name
+                })
+                .ToListAsync();
+
             return Ok(articles);
         }
 
         // GET: api/articles/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetArticle(int id)
+        public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
+        {
+            var article = await _dbContext.Articles
+                .Include(a => a.Company)
+                .Where(a => a.id == id)
+                .Select(a => new ArticleReadDto
+                {
+                    Id = a.id,
+                    Name = a.name,
+                    Value = a.value,
+                    CompanyId = a.companyId,
+                    CompanyName = a.Company.name // Include company name
+                })
+                .FirstOrDefaultAsync();
+
+            if (article == null)
+            {
+                return NotFound("Article not found");
+            }
+
+            return Ok(article);
+        }
+
+        // POST: api/articles
+        [HttpPost]
+        public async Task<ActionResult<ArticleReadDto>> CreateArticle([FromBody] ArticleCreateDto articleDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var article = new Article
+            {
+                name = articleDto.Name,
+                value = articleDto.Value,
+                companyId = articleDto.CompanyId
+            };
+
+            _dbContext.Articles.Add(article);
+            await _dbContext.SaveChangesAsync();
+
+            var articleReadDto = new ArticleReadDto
+            {
+                Id = article.id,
+                Name = article.name,
+                Value = article.value,
+                CompanyId = article.companyId,
+                CompanyName = (await _dbContext.Companies.FindAsync(article.companyId))?.name
+            };
+
+            return CreatedAtAction(nameof(GetArticle), new { id = article.id }, articleReadDto);
+        }
+
+        // PUT: api/articles/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateArticle(int id, [FromBody] ArticleUpdateDto articleDto)
         {
             var article = await _dbContext.Articles.FindAsync(id);
             if (article == null)
             {
                 return NotFound("Article not found");
             }
-            return Ok(article);
-        }
 
-        // POST: api/articles
-        [HttpPost]
-        public async Task<IActionResult> CreateArticle(Article article)
-        {
-            _dbContext.Articles.Add(article);
-            await _dbContext.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetArticle), new { id = article.id }, article);
-        }
-
-        // PUT: api/articles/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateArticle(int id, Article article)
-        {
-            if (id != article.id)
-            {
-                return BadRequest("Article ID mismatch");
-            }
-
-            _dbContext.Entry(article).State = EntityState.Modified;
+            article.name = articleDto.Name;
+            article.value = articleDto.Value;
 
             try
             {
@@ -96,4 +145,5 @@ namespace WebApplication1.Controllers
             return _dbContext.Articles.Any(e => e.id == id);
         }
     }
+
 }

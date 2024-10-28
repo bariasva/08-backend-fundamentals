@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication1.Controllers
 {
-    [Route("api/[controller]")]
+    [Authorize]
+    [ApiVersion("1.0")]
     [ApiController]
+    [Route("api/[controller]")]
     public class OrdersController : ControllerBase
     {
         private readonly ApplicationDbContext _dbContext;
@@ -19,21 +19,49 @@ namespace WebApplication1.Controllers
 
         // GET: api/orders
         [HttpGet]
-        public async Task<IActionResult> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderReadDto>>> GetOrders()
         {
             var orders = await _dbContext.Orders
                 .Include(o => o.OrderDetails)
+                .Select(o => new OrderReadDto
+                {
+                    Id = o.id,
+                    Name = o.name,
+                    EmployeeId = o.employeeId,
+                    TotalValue = o.totalValue,
+                    Status = o.status,
+                    OrderDetails = o.OrderDetails.Select(od => new OrderDetailReadDto
+                    {
+                        ArticleId = od.articleId,
+                        Quantity = od.quantity
+                    }).ToList()
+                })
                 .ToListAsync();
+
             return Ok(orders);
         }
 
         // GET: api/orders/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder(int id)
+        public async Task<ActionResult<OrderReadDto>> GetOrder(int id)
         {
             var order = await _dbContext.Orders
                 .Include(o => o.OrderDetails)
-                .FirstOrDefaultAsync(o => o.id == id);
+                .Where(o => o.id == id)
+                .Select(o => new OrderReadDto
+                {
+                    Id = o.id,
+                    Name = o.name,
+                    EmployeeId = o.employeeId,
+                    TotalValue = o.totalValue,
+                    Status = o.status,
+                    OrderDetails = o.OrderDetails.Select(od => new OrderDetailReadDto
+                    {
+                        ArticleId = od.articleId,
+                        Quantity = od.quantity
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (order == null)
             {
@@ -45,24 +73,37 @@ namespace WebApplication1.Controllers
 
         // POST: api/orders
         [HttpPost]
-        public async Task<IActionResult> CreateOrder(Order order)
+        public async Task<IActionResult> CreateOrder([FromBody] OrderCreateDto orderDto)
         {
-            if (order.OrderDetails == null || !order.OrderDetails.Any())
+            if (orderDto.OrderDetails == null || !orderDto.OrderDetails.Any())
             {
                 return BadRequest("An order must contain at least one article.");
             }
 
             // Ensure articles belong to the same company as the employee who owns the order
             var employeeCompanyId = await _dbContext.Employees
-                .Where(e => e.id == order.employeeId)
+                .Where(e => e.id == orderDto.EmployeeId)
                 .Select(e => e.companyId)
                 .FirstOrDefaultAsync();
 
-            if (employeeCompanyId == 0 || !order.OrderDetails.All(od =>
-                _dbContext.Articles.Any(a => a.id == od.articleId && a.companyId == employeeCompanyId)))
+            if (employeeCompanyId == 0 || !orderDto.OrderDetails.All(od =>
+                _dbContext.Articles.Any(a => a.id == od.ArticleId && a.companyId == employeeCompanyId)))
             {
                 return BadRequest("All articles must belong to the same company as the employee.");
             }
+
+            var order = new Order
+            {
+                name = orderDto.Name,
+                employeeId = orderDto.EmployeeId,
+                totalValue = 0, // You might want to calculate total value based on order details
+                status = "Pending", // Default status
+                OrderDetails = orderDto.OrderDetails.Select(od => new OrderDetail
+                {
+                    articleId = od.ArticleId,
+                    quantity = od.Quantity
+                }).ToList()
+            };
 
             _dbContext.Orders.Add(order);
             await _dbContext.SaveChangesAsync();
@@ -72,14 +113,14 @@ namespace WebApplication1.Controllers
 
         // PUT: api/orders/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(int id, Order order)
+        public async Task<IActionResult> UpdateOrder(int id, [FromBody] OrderCreateDto orderDto)
         {
-            if (id != order.id)
+            if (id != orderDto.EmployeeId)
             {
                 return BadRequest("Order ID mismatch");
             }
 
-            if (order.OrderDetails == null || !order.OrderDetails.Any())
+            if (orderDto.OrderDetails == null || !orderDto.OrderDetails.Any())
             {
                 return BadRequest("An order must contain at least one article.");
             }
@@ -93,7 +134,13 @@ namespace WebApplication1.Controllers
                 return NotFound("Order not found");
             }
 
-            existingOrder.OrderDetails = order.OrderDetails;
+            existingOrder.OrderDetails = orderDto.OrderDetails.Select(od => new OrderDetail
+            {
+                articleId = od.ArticleId,
+                quantity = od.Quantity
+            }).ToList();
+            existingOrder.name = orderDto.Name; // Update other properties as needed
+
             _dbContext.Entry(existingOrder).State = EntityState.Modified;
 
             try
@@ -139,4 +186,5 @@ namespace WebApplication1.Controllers
             return _dbContext.Orders.Any(o => o.id == id);
         }
     }
+
 }

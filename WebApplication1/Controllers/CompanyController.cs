@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication1.Controllers;
-
+[Authorize]
 [ApiController]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 [Route("api/[controller]")]
 public class CompanyController : ControllerBase
 {
